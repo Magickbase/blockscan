@@ -1,5 +1,5 @@
-<h1 align="center">BlockScout</h1>
-<p align="center">Blockchain Explorer for inspecting and analyzing EVM Chains.</p>
+<h1 align="center">AxonExplorer</h1>
+<p align="center">Axon Explorer was fork by bnlockscout explorer project.</p>
 <div align="center">
 
 [![Blockscout](https://github.com/blockscout/blockscout/workflows/Blockscout/badge.svg?branch=master)](https://github.com/blockscout/blockscout/actions) [![Join the chat at https://gitter.im/poanetwork/blockscout](https://badges.gitter.im/poanetwork/blockscout.svg)](https://gitter.im/poanetwork/blockscout?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -40,7 +40,7 @@ See the [project documentation](https://docs.blockscout.com/) for instructions:
 
 ## Acknowledgements
 
-We would like to thank the [EthPrize foundation](http://ethprize.io/) for their funding support.
+We would like to thank the [Nervos Network](https://www.nervos.org/) for their funding support.
 
 ## Contributing
 
