@@ -34,7 +34,15 @@ ADD apps/indexer/mix.exs ./apps/indexer/
 
 RUN mix do deps.get, local.rebar --force, deps.compile
 
-ADD . .
+# Add blockscout npm deps
+ADD apps/block_scout_web/assets/ ./apps/block_scout_web/assets/
+ADD apps/block_scout_web/priv/ ./apps/block_scout_web/priv/
+RUN npm install npm@latest
+
+RUN cd apps/block_scout_web/assets/ && \
+    npm install && \
+    npm run deploy && \
+    cd -
 
 ARG COIN
 RUN if [ "$COIN" != "" ]; then \
@@ -45,16 +53,9 @@ RUN if [ "$COIN" != "" ]; then \
         sed -i "/msgid \"ETH\"/{n;s/msgstr \"\"/msgstr \"${COIN}\"/g}" apps/block_scout_web/priv/gettext/en/LC_MESSAGES/default.po; \
     fi
 
-# Run forderground build and phoenix digest
+ADD . .
+
 RUN mix compile
-
-RUN npm install npm@latest
-
-# Add blockscout npm deps
-RUN cd apps/block_scout_web/assets/ && \
-    npm install && \
-    npm run deploy && \
-    cd -
 
 RUN cd apps/explorer/ && \
     npm install && \
