@@ -2,7 +2,7 @@
 <p align="center">Axon Explorer was fork on blockscout explorer project.</p>
 
 ## About
-Axon Explorer was a explorer for [Axon]() Side Chain which is a layer2 network build on Nervos Network CKB
+Axon Explorer was a explorer for [Axon](https://github.com/nervosnetwork/axon) Side Chain which is a layer2 network build on [Nervos Network](https://www.nervos.org/) [CKB](https://github.com/nervosnetwork/ckb)
 ## Getting Started
   1. install docker and docker compose
   2. run pg database on the host machine
