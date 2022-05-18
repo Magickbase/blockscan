@@ -1,0 +1,24 @@
+name: axon_explorer staging build and run
+on:
+  push:
+    branches:
+      - "develop"
+
+jobs:
+  staging-testnet-build-run:
+    runs-on: [self-hosted, staging_testnet]
+    environment: axon_staging
+    # env:
+    #   ENV_FILE_PATH: ${{secrets.ENV_FILE_PATH}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Docker Compose build
+        run: docker-compose -f ./docker-compose.yml --env-file ./axon_staging.env build axon_explorer
+
+      - name: Docker Compose run
+        run: docker-compose -f ./docker-compose.yml  --env-file ./axon_staging.env up -d --force-recreate axon_explorer
+
+      - name: Clean up unused images
+        run: docker image prune -f
