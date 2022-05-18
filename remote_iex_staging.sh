@@ -1,0 +1,1 @@
+iex --name remote1@127.0.0.1 --remsh axon_explorer@127.0.0.1
