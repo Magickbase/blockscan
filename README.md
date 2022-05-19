@@ -4,7 +4,7 @@
 ## About
 Axon Explorer was a explorer for [Axon](https://github.com/nervosnetwork/axon) Side Chain which is a layer2 network build on [Nervos Network](https://www.nervos.org/) [CKB](https://github.com/nervosnetwork/ckb)
 ## Getting Started
-  1. install docker and docker compose
+  1. install latest docker and docker compose
   2. run pg database on the host machine
   3. edit `xxx.env` file
   4. build command `docker-compose --env-file ./axon_staging.env -f ./docker-compose.yml build axon_explorer`
