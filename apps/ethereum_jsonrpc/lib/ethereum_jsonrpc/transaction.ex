@@ -14,7 +14,12 @@ defmodule EthereumJSONRPC.Transaction do
   alias EthereumJSONRPC
 
   @type elixir :: %{
-          String.t() => EthereumJSONRPC.address() | EthereumJSONRPC.hash() | String.t() | non_neg_integer() | nil
+          String.t() =>
+            EthereumJSONRPC.address()
+            | EthereumJSONRPC.hash()
+            | String.t()
+            | non_neg_integer()
+            | nil
         }
 
   @typedoc """
@@ -47,7 +52,11 @@ defmodule EthereumJSONRPC.Transaction do
   """
   @type t :: %{
           String.t() =>
-            EthereumJSONRPC.address() | EthereumJSONRPC.hash() | EthereumJSONRPC.quantity() | String.t() | nil
+            EthereumJSONRPC.address()
+            | EthereumJSONRPC.hash()
+            | EthereumJSONRPC.quantity()
+            | String.t()
+            | nil
         }
 
   @type params :: %{
@@ -348,7 +357,10 @@ defmodule EthereumJSONRPC.Transaction do
     request(%{
       id: id,
       method: "eth_call",
-      params: [%{to: to, from: from, data: data, gas: gas, gasPrice: gas_price, value: value}, block]
+      params: [
+        %{to: to, from: from, data: data, gas: gas, gasPrice: gas_price, value: value},
+        block
+      ]
     })
   end
 
@@ -358,7 +370,7 @@ defmodule EthereumJSONRPC.Transaction do
   #
   # "txType": to avoid FunctionClauseError when indexing Wanchain
   defp entry_to_elixir({key, value})
-       when key in ~w(blockHash condition creates from hash input jsonrpc publicKey raw to txType),
+       when key in ~w(blockHash condition creates from hash input jsonrpc publicKey raw to txType, accessList),
        do: {key, value}
 
   # specific to Nethermind client
@@ -393,10 +405,6 @@ defmodule EthereumJSONRPC.Transaction do
       nil -> {key, chain_id}
       _ -> {key, quantity_to_integer(chain_id)}
     end
-  end
-
-  defp entry_to_elixir({"type" = key, v}) do
-    {key, quantity_to_integer(v)}
   end
 
   defp entry_to_elixir(_) do
