@@ -13,9 +13,9 @@ defmodule Explorer.Chain.SmartContract do
   use Explorer.Schema
 
   alias Ecto.Changeset
+  alias Explorer.{Chain, Repo}
   alias Explorer.Chain.{Address, ContractMethod, DecompiledSmartContract, Hash}
   alias Explorer.Chain.SmartContract.ExternalLibrary
-  alias Explorer.Repo
 
   @typedoc """
   The name of a parameter to a function or event.
@@ -197,7 +197,7 @@ defmodule Explorer.Chain.SmartContract do
   * `partially_verified` - whether contract verified using partial matched source code or not.
   * `is_vyper_contract` - boolean flag, determines if contract is Vyper or not
   * `file_path` - show the filename or path to the file of the contract source file
-  * `is_changed_bytecode` - boolean flag, determines if contract's bytecode was modified 
+  * `is_changed_bytecode` - boolean flag, determines if contract's bytecode was modified
   * `bytecode_checked_at` - timestamp of the last check of contract's bytecode matching (DB and BlockChain)
   * `contract_code_md5` - md5(`t:Explorer.Chain.Address.t/0` `contract_code`)
   * `implementation_name` - name of the proxy implementation
@@ -460,4 +460,21 @@ defmodule Explorer.Chain.SmartContract do
     |> Changeset.put_change(:compiler_version, "latest")
     |> Changeset.put_change(:contract_source_code, "")
   end
+
+  def address_to_checksum_address(changeset) do
+    checksum_address =
+      changeset
+      |> Changeset.get_field(:address_hash)
+      |> to_address_hash()
+      |> Address.checksum()
+
+    Changeset.force_change(changeset, :address_hash, checksum_address)
+  end
+
+  defp to_address_hash(string) when is_binary(string) do
+    {:ok, address_hash} = Chain.string_to_address_hash(string)
+    address_hash
+  end
+
+  defp to_address_hash(address_hash), do: address_hash
 end
