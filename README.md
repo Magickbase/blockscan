@@ -21,8 +21,8 @@ Axon Explorer was a explorer for [Axon](https://github.com/nervosnetwork/axon) S
     * DATABASE_URL (setting explorer access database url)  
 
 ## Acknowledgements
-
-We would like to thank the [Nervos Network](https://www.nervos.org/) for their funding support.
+- We would like to thank the [Nervos Network](https://www.nervos.org/) for their funding support.  
+- And also thanks to [blockscout](https://github.com/blockscout/blockscout) team, this project was forked from blockscout.
 
 ## Contributing
 just fork and pull request
