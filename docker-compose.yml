@@ -1,8 +1,22 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:14.4
+    restart: always
+    container_name: 'postgres'
+    environment:
+        POSTGRES_PASSWORD: 'postgres'
+        POSTGRES_USER: 'postgres'
+        # POSTGRES_HOST_AUTH_METHOD: 'trust'
+    ports:
+      - 27543:5432
+    volumes:
+      - /Volumes/externaldisk/database_docker:/var/lib/postgresql/data
   axon_explorer:
     image: axon_explorer/axon_explorer:${DOCKER_TAG:-latest}
+    depends_on:
+      - db
     build:
       context: ./
       dockerfile: ./docker/Dockerfile
@@ -146,3 +160,4 @@ services:
       - API_RATE_LIMIT_STATIC_API_KEY
     ports:
       - 4020:4020
+
