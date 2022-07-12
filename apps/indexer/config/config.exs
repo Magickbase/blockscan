@@ -4,7 +4,8 @@ import Config
 
 block_transformers = %{
   "clique" => Indexer.Transform.Blocks.Clique,
-  "base" => Indexer.Transform.Blocks.Base
+  "base" => Indexer.Transform.Blocks.Base,
+  "axon" => Indexer.Transform.Blocks.Axon
 }
 
 # Compile time environment variable access requires recompilation.

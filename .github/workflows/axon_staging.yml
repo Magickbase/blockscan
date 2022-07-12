@@ -1,0 +1,25 @@
+name: axon_explorer staging build and run
+on:
+  push:
+    branches:
+      - "develop"
+      - "main"
+
+jobs:
+  staging-testnet-build-run:
+    runs-on: [self-hosted, share_staging]
+    environment: axon_staging
+    env:
+      ENV_FILE_PATH: ${{secrets.ENV_FILE_PATH}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Docker Compose build
+        run: docker-compose -f ./docker-compose.yml --env-file ${{secrets.ENV_FILE_PATH}} build blockscan
+
+      - name: Docker Compose run
+        run: docker-compose -f ./docker-compose.yml  --env-file ${{secrets.ENV_FILE_PATH}} up -d --force-recreate blockscan
+
+      - name: Clean up unused images
+        run: docker image prune -f
