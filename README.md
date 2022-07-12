@@ -7,10 +7,10 @@ BlockScan is a explorer for ETH compatible chain like [Axon](https://github.com/
   1. install latest docker and docker compose
   2. run pg database on the host machine
   3. edit `xxx.env` file
-  4. build command `docker-compose --env-file ./axon_dev.env -f ./docker-compose.yml build blockscan`
-  5. run database `docker-compose --env-file ./axon_dev.env  -f ./docker-compose.yml up --force-recreate db`
-  6. run command `docker-compose --env-file ./axon_dev.env  -f ./docker-compose.yml up --force-recreate blockscan`
-  7. use your env file instead of axon_dev.env
+  4. build command `docker-compose --env-file ./dev.env -f ./docker-compose.yml build blockscan`
+  5. run database `docker-compose --env-file ./dev.env  -f ./docker-compose.yml up --force-recreate db`
+  6. run command `docker-compose --env-file ./dev.env  -f ./docker-compose.yml up --force-recreate blockscan`
+  7. use your env file instead of dev.env
 ## Github Action
   1. setting your forked project environment: "axon_staging" (you can change it in your github workflow file)
   2. setting secret environment `ENV_FILE_PATH` which directing real path of your .env file on the deployment server
