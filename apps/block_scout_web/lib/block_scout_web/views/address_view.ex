@@ -233,7 +233,8 @@ defmodule BlockScoutWeb.AddressView do
   def qr_code(address_hash) do
     address_hash
     |> to_string()
-    |> QRCode.to_png()
+    |> EQRCode.encode()
+    |> EQRCode.png()
     |> Base.encode64()
   end
 

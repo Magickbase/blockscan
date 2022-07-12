@@ -150,7 +150,8 @@ defmodule BlockScoutWeb.Tokens.Instance.OverviewView do
     url = Path.join(url_prefix, token_instance_path)
 
     url
-    |> QRCode.to_png()
+    |> EQRCode.encode()
+    |> EQRCode.png()
     |> Base.encode64()
   end
 

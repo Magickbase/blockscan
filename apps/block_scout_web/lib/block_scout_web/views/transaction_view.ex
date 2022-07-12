@@ -418,7 +418,8 @@ defmodule BlockScoutWeb.TransactionView do
   def qr_code(%Transaction{hash: hash}) do
     hash
     |> to_string()
-    |> QRCode.to_png()
+    |> EQRCode.encode()
+    |> EQRCode.png()
     |> Base.encode64()
   end
 
