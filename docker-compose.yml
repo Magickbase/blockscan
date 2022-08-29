@@ -3,15 +3,15 @@ version: '3.8'
 volumes:
   db:
     driver: local
-    
+
 services:
   db:
     image: postgres:14.4
     restart: always
     container_name: 'postgres'
     environment:
-      POSTGRES_PASSWORD: postgres123
-      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
       # POSTGRES_HOST_AUTH_METHOD: 'trust'
     ports:
       - 27543:5432
@@ -38,7 +38,7 @@ services:
       - 'host.docker.internal:host-gateway'
     # env_file:
     #   -  ./docker-compose/envs/common-blockscout.env
-    
+
     environment:
       - DOCKER_TAG
       - ETHEREUM_JSONRPC_VARIANT
