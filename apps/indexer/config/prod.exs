@@ -39,7 +39,7 @@ config :logger, :empty_blocks_to_refetch,
 
 variant =
   if is_nil(System.get_env("ETHEREUM_JSONRPC_VARIANT")) do
-    "parity"
+    "geth"
   else
     System.get_env("ETHEREUM_JSONRPC_VARIANT")
     |> String.split(".")

@@ -40,6 +40,7 @@ services:
     #   -  ./docker-compose/envs/common-blockscout.env
 
     environment:
+      - MIX_ENV=prod
       - DOCKER_TAG
       - ETHEREUM_JSONRPC_VARIANT
       - ETHEREUM_JSONRPC_HTTP_URL
