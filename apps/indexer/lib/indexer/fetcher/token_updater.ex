@@ -2,7 +2,7 @@ defmodule Indexer.Fetcher.TokenUpdater do
   @moduledoc """
   Updates metadata for cataloged tokens
   """
-  use Indexer.Fetcher
+  use Indexer.Fetcher, restart: :permanent
 
   require Logger
 
@@ -85,6 +85,6 @@ defmodule Indexer.Fetcher.TokenUpdater do
   end
 
   def update_metadata(%Token{} = token, metadata) do
-    Chain.update_token(%{token | updated_at: DateTime.utc_now()}, metadata)
+    Chain.update_token(token, metadata)
   end
 end

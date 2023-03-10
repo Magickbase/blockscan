@@ -2,6 +2,7 @@ defmodule BlockScoutWeb.TransactionView do
   use BlockScoutWeb, :view
 
   alias BlockScoutWeb.{AccessHelpers, AddressView, BlockView, TabHelpers}
+  alias BlockScoutWeb.Account.AuthController
   alias BlockScoutWeb.Cldr.Number
   alias Explorer.{Chain, CustomContractsHelpers, Repo}
   alias Explorer.Chain.Block.Reward
@@ -11,10 +12,10 @@ defmodule BlockScoutWeb.TransactionView do
   alias Timex.Duration
 
   import BlockScoutWeb.Gettext
-  import BlockScoutWeb.AddressView, only: [from_address_hash: 1, short_token_id: 2]
+  import BlockScoutWeb.AddressView, only: [from_address_hash: 1, short_token_id: 2, tag_name_to_label: 1]
   import BlockScoutWeb.Tokens.Helpers
 
-  @tabs ["token-transfers", "internal-transactions", "logs", "raw-trace"]
+  @tabs ["token-transfers", "internal-transactions", "logs", "raw-trace", "state"]
 
   @token_burning_title "Token Burning"
   @token_minting_title "Token Minting"
@@ -59,6 +60,10 @@ defmodule BlockScoutWeb.TransactionView do
 
     type = Chain.transaction_token_transfer_type(transaction)
     if type, do: {type, transaction_with_transfers_filtered}, else: {nil, transaction_with_transfers_filtered}
+  end
+
+  def transaction_actions(transaction) do
+    Repo.preload(transaction, :transaction_actions)
   end
 
   def aggregate_token_transfers(token_transfers) do
@@ -140,8 +145,7 @@ defmodule BlockScoutWeb.TransactionView do
       token: token_transfer.token,
       amount: nil,
       amounts: [],
-      token_id: token_transfer.token_id,
-      token_ids: [],
+      token_ids: token_transfer.token_ids,
       to_address_hash: token_transfer.to_address_hash,
       from_address_hash: token_transfer.from_address_hash
     }
@@ -155,7 +159,6 @@ defmodule BlockScoutWeb.TransactionView do
       token: token_transfer.token,
       amount: nil,
       amounts: amounts,
-      token_id: nil,
       token_ids: token_transfer.token_ids,
       to_address_hash: token_transfer.to_address_hash,
       from_address_hash: token_transfer.from_address_hash
@@ -169,8 +172,7 @@ defmodule BlockScoutWeb.TransactionView do
       token: token_transfer.token,
       amount: token_transfer.amount,
       amounts: [],
-      token_id: token_transfer.token_id,
-      token_ids: [],
+      token_ids: token_transfer.token_ids,
       to_address_hash: token_transfer.to_address_hash,
       from_address_hash: token_transfer.from_address_hash
     }
@@ -320,6 +322,20 @@ defmodule BlockScoutWeb.TransactionView do
     end
   end
 
+  def formatted_action_amount(data, field_name) do
+    data
+    |> Map.get(field_name)
+    |> Decimal.new()
+    |> BlockScoutWeb.CldrHelper.Number.to_string!(format: "#,##0.##################")
+  end
+
+  def transaction_action_string_to_address(address) do
+    case Chain.string_to_address_hash(address) do
+      {:ok, address_hash} -> Chain.hash_to_address(address_hash)
+      _ -> {:error, nil}
+    end
+  end
+
   def transaction_status(transaction) do
     Chain.transaction_to_status(transaction)
   end
@@ -392,7 +408,7 @@ defmodule BlockScoutWeb.TransactionView do
   def gas_used_perc(%Transaction{gas_used: nil}), do: nil
 
   def gas_used_perc(%Transaction{gas_used: gas_used, gas: gas}) do
-    if Decimal.cmp(gas, 0) == :gt do
+    if Decimal.compare(gas, 0) == :gt do
       gas_used
       |> Decimal.div(gas)
       |> Decimal.mult(100)
@@ -513,6 +529,7 @@ defmodule BlockScoutWeb.TransactionView do
   defp tab_name(["internal-transactions"]), do: gettext("Internal Transactions")
   defp tab_name(["logs"]), do: gettext("Logs")
   defp tab_name(["raw-trace"]), do: gettext("Raw Trace")
+  defp tab_name(["state"]), do: gettext("State changes")
 
   defp get_transaction_type_from_token_transfers(token_transfers) do
     token_transfers_types =
