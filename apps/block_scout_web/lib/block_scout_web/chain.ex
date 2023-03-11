@@ -24,8 +24,9 @@ defmodule BlockScoutWeb.Chain do
     Block,
     InternalTransaction,
     Log,
-    StakingPool,
+    SmartContract,
     Token,
+    Token.Instance,
     TokenTransfer,
     Transaction,
     Wei
@@ -217,6 +218,10 @@ defmodule BlockScoutWeb.Chain do
     [paging_options: %{@default_paging_options | key: {name, type, value}}]
   end
 
+  def paging_options(%{"smart_contract_id" => id}) do
+    [paging_options: %{@default_paging_options | key: {id}}]
+  end
+
   def paging_options(_params), do: [paging_options: @default_paging_options]
 
   def put_key_value_to_paging_options([paging_options: paging_options], key, value) do
@@ -231,6 +236,11 @@ defmodule BlockScoutWeb.Chain do
       _ ->
         1
     end
+  end
+
+  def fetch_page_number(%{"items_count" => item_count_str}) do
+    {items_count, _} = Integer.parse(item_count_str)
+    div(items_count, @page_size) + 1
   end
 
   def fetch_page_number(_), do: 1
@@ -342,7 +352,7 @@ defmodule BlockScoutWeb.Chain do
     %{"address_hash" => to_string(address_hash), "value" => Decimal.to_integer(value)}
   end
 
-  defp paging_params({%CurrentTokenBalance{value: value}, _, %Token{name: name, type: type}}) do
+  defp paging_params({%CurrentTokenBalance{value: value}, %Token{name: name, type: type}}) do
     %{"token_name" => name, "token_type" => type, "value" => Decimal.to_integer(value)}
   end
 
@@ -350,8 +360,8 @@ defmodule BlockScoutWeb.Chain do
     %{"block_number" => block_number}
   end
 
-  defp paging_params(%StakingPool{staking_address_hash: address_hash, stakes_ratio: value}) do
-    %{"address_hash" => address_hash, "value" => Decimal.to_string(value)}
+  defp paging_params(%SmartContract{} = smart_contract) do
+    %{"smart_contract_id" => smart_contract.id}
   end
 
   defp paging_params(%{
@@ -374,6 +384,10 @@ defmodule BlockScoutWeb.Chain do
       "inserted_at" => inserted_at_datetime,
       "item_type" => type
     }
+  end
+
+  defp paging_params(%Instance{token_id: token_id}) do
+    %{"unique_token" => Decimal.to_integer(token_id)}
   end
 
   defp block_or_transaction_from_param(param) do
@@ -400,5 +414,16 @@ defmodule BlockScoutWeb.Chain do
       :error ->
         {:error, :not_found}
     end
+  end
+
+  def unique_tokens_paging_options(%{"unique_token" => token_id}),
+    do: [paging_options: %{default_paging_options() | key: {token_id}}]
+
+  def unique_tokens_paging_options(_params), do: [paging_options: default_paging_options()]
+
+  def unique_tokens_next_page([], _list, _params), do: nil
+
+  def unique_tokens_next_page(_, list, params) do
+    Map.merge(params, paging_params(List.last(list)))
   end
 end
