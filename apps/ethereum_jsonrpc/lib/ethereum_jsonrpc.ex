@@ -401,6 +401,8 @@ defmodule EthereumJSONRPC do
 
   def quantity_to_integer(integer) when is_integer(integer), do: integer
 
+  def quantity_to_integer(nil), do: 0
+
   def quantity_to_integer(string) when is_binary(string) do
     case Integer.parse(string) do
       {integer, ""} -> integer

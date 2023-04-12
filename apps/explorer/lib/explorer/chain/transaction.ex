@@ -43,14 +43,14 @@ defmodule Explorer.Chain.Transaction do
   [Elliptic Curve Digital Signature Algorithm](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm)
   (EDCSA)
   """
-  @type r :: Decimal.t()
+  @type r :: String.t()
 
   @typedoc """
   Y coordinate module n in
   [Elliptic Curve Digital Signature Algorithm](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm)
   (EDCSA)
   """
-  @type s :: Decimal.t()
+  @type s :: String.t()
 
   @typedoc """
   The index of the transaction in its block.
@@ -230,8 +230,8 @@ defmodule Explorer.Chain.Transaction do
     field(:created_contract_code_indexed_at, :utc_datetime_usec)
     field(:input, Data)
     field(:nonce, :integer)
-    field(:r, :decimal)
-    field(:s, :decimal)
+    field(:r, :string)
+    field(:s, :string)
     field(:status, Status)
     field(:v, :decimal)
     field(:value, Wei)

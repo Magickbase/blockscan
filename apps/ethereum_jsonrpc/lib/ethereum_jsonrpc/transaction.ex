@@ -456,14 +456,24 @@ defmodule EthereumJSONRPC.Transaction do
     do: {"input", value}
 
   defp entry_to_elixir({key, quantity})
-       when key in ~w(gas gasPrice nonce r s standardV v value type maxPriorityFeePerGas maxFeePerGas) and
+       when key in ~w(gas gasPrice nonce standardV v value type maxPriorityFeePerGas maxFeePerGas) and
               quantity != nil do
     {key, quantity_to_integer(quantity)}
   end
 
+  defp entry_to_elixir({key, quantity})
+       when key in ~w(r s) and
+              quantity != nil do
+    {key, quantity}
+  end
+
   # as always ganache has it's own vision on JSON RPC standard
-  defp entry_to_elixir({key, nil}) when key in ~w(r s v) do
+  defp entry_to_elixir({key, nil}) when key in ~w(v) do
     {key, 0}
+  end
+
+  defp entry_to_elixir({key, nil}) when key in ~w(r s) do
+    {key, "0x0"}
   end
 
   # quantity or nil for pending
