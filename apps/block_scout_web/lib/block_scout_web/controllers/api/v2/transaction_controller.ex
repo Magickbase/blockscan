@@ -1,7 +1,10 @@
 defmodule BlockScoutWeb.API.V2.TransactionController do
   use BlockScoutWeb, :controller
 
-  import BlockScoutWeb.Chain, only: [next_page_params: 3, paging_options: 1, split_list_by_page: 1]
+  import BlockScoutWeb.Account.AuthController, only: [current_user: 1]
+
+  import BlockScoutWeb.Chain,
+    only: [next_page_params: 3, token_transfers_next_page_params: 3, paging_options: 1, split_list_by_page: 1]
 
   import BlockScoutWeb.PagingHelper,
     only: [
@@ -13,7 +16,7 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
       type_filter_options: 1
     ]
 
-  alias BlockScoutWeb.AccessHelpers
+  alias BlockScoutWeb.AccessHelper
   alias BlockScoutWeb.Models.TransactionStateHelper
   alias Explorer.Chain
   alias Indexer.Fetcher.FirstTraceOnDemand
@@ -29,7 +32,7 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
     [to_address: :smart_contract] => :optional
   }
 
-  @token_transfers_neccessity_by_association %{
+  @token_transfers_necessity_by_association %{
     [from_address: :smart_contract] => :optional,
     [to_address: :smart_contract] => :optional,
     [from_address: :names] => :optional,
@@ -38,7 +41,7 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
     to_address: :required
   }
 
-  @token_transfers_in_tx_neccessity_by_association %{
+  @token_transfers_in_tx_necessity_by_association %{
     [from_address: :smart_contract] => :optional,
     [to_address: :smart_contract] => :optional,
     [from_address: :names] => :optional,
@@ -48,7 +51,7 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
     token: :required
   }
 
-  @internal_transaction_neccessity_by_association [
+  @internal_transaction_necessity_by_association [
     necessity_by_association: %{
       [created_contract_address: :names] => :optional,
       [from_address: :names] => :optional,
@@ -60,18 +63,21 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
     }
   ]
 
+  @api_true [api?: true]
+
   def transaction(conn, %{"transaction_hash" => transaction_hash_string} = params) do
     with {:format, {:ok, transaction_hash}} <- {:format, Chain.string_to_transaction_hash(transaction_hash_string)},
          {:not_found, {:ok, transaction}} <-
            {:not_found,
             Chain.hash_to_transaction(
               transaction_hash,
-              necessity_by_association: Map.put(@transaction_necessity_by_association, :transaction_actions, :optional)
+              necessity_by_association: Map.put(@transaction_necessity_by_association, :transaction_actions, :optional),
+              api?: true
             )},
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.from_address_hash), params),
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.to_address_hash), params),
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.from_address_hash), params),
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.to_address_hash), params),
          preloaded <-
-           Chain.preload_token_transfers(transaction, @token_transfers_in_tx_neccessity_by_association, false) do
+           Chain.preload_token_transfers(transaction, @token_transfers_in_tx_necessity_by_association, @api_true, false) do
       conn
       |> put_status(200)
       |> render(:transaction, %{transaction: preloaded})
@@ -88,6 +94,7 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
       |> Keyword.merge(paging_options(params, filter_options))
       |> Keyword.merge(method_filter_options(params))
       |> Keyword.merge(type_filter_options(params))
+      |> Keyword.merge(@api_true)
 
     transactions_plus_one = Chain.recent_transactions(full_options, filter_options)
 
@@ -103,15 +110,15 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
   def raw_trace(conn, %{"transaction_hash" => transaction_hash_string} = params) do
     with {:format, {:ok, transaction_hash}} <- {:format, Chain.string_to_transaction_hash(transaction_hash_string)},
          {:not_found, {:ok, transaction}} <-
-           {:not_found, Chain.hash_to_transaction(transaction_hash)},
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.from_address_hash), params),
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.to_address_hash), params) do
+           {:not_found, Chain.hash_to_transaction(transaction_hash, @api_true)},
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.from_address_hash), params),
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.to_address_hash), params) do
       if is_nil(transaction.block_number) do
         conn
         |> put_status(200)
         |> render(:raw_trace, %{internal_transactions: []})
       else
-        internal_transactions = Chain.all_transaction_to_internal_transactions(transaction_hash)
+        internal_transactions = Chain.all_transaction_to_internal_transactions(transaction_hash, @api_true)
 
         first_trace_exists =
           Enum.find_index(internal_transactions, fn trace ->
@@ -132,21 +139,28 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
   def token_transfers(conn, %{"transaction_hash" => transaction_hash_string} = params) do
     with {:format, {:ok, transaction_hash}} <- {:format, Chain.string_to_transaction_hash(transaction_hash_string)},
          {:not_found, {:ok, transaction}} <-
-           {:not_found, Chain.hash_to_transaction(transaction_hash)},
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.from_address_hash), params),
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.to_address_hash), params) do
+           {:not_found, Chain.hash_to_transaction(transaction_hash, @api_true)},
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.from_address_hash), params),
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.to_address_hash), params) do
+      paging_options = paging_options(params)
+
       full_options =
-        [necessity_by_association: @token_transfers_neccessity_by_association]
-        |> Keyword.merge(paging_options(params))
+        [necessity_by_association: @token_transfers_necessity_by_association]
+        |> Keyword.merge(paging_options)
         |> Keyword.merge(token_transfers_types_options(params))
+        |> Keyword.merge(@api_true)
 
-      token_transfers_plus_one = Chain.transaction_to_token_transfers(transaction_hash, full_options)
+      results =
+        transaction_hash
+        |> Chain.transaction_to_token_transfers(full_options)
+        |> Chain.flat_1155_batch_token_transfers()
+        |> Chain.paginate_1155_batch_token_transfers(paging_options)
 
-      {token_transfers, next_page} = split_list_by_page(token_transfers_plus_one)
+      {token_transfers, next_page} = split_list_by_page(results)
 
       next_page_params =
         next_page
-        |> next_page_params(token_transfers, params)
+        |> token_transfers_next_page_params(token_transfers, params)
         |> delete_parameters_from_next_page_params()
 
       conn
@@ -158,14 +172,13 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
   def internal_transactions(conn, %{"transaction_hash" => transaction_hash_string} = params) do
     with {:format, {:ok, transaction_hash}} <- {:format, Chain.string_to_transaction_hash(transaction_hash_string)},
          {:not_found, {:ok, transaction}} <-
-           {:not_found, Chain.hash_to_transaction(transaction_hash)},
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.from_address_hash), params),
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.to_address_hash), params) do
+           {:not_found, Chain.hash_to_transaction(transaction_hash, @api_true)},
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.from_address_hash), params),
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.to_address_hash), params) do
       full_options =
-        Keyword.merge(
-          @internal_transaction_neccessity_by_association,
-          paging_options(params)
-        )
+        @internal_transaction_necessity_by_association
+        |> Keyword.merge(paging_options(params))
+        |> Keyword.merge(@api_true)
 
       internal_transactions_plus_one = Chain.transaction_to_internal_transactions(transaction_hash, full_options)
 
@@ -188,23 +201,21 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
   def logs(conn, %{"transaction_hash" => transaction_hash_string} = params) do
     with {:format, {:ok, transaction_hash}} <- {:format, Chain.string_to_transaction_hash(transaction_hash_string)},
          {:not_found, {:ok, transaction}} <-
-           {:not_found, Chain.hash_to_transaction(transaction_hash)},
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.from_address_hash), params),
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.to_address_hash), params) do
+           {:not_found, Chain.hash_to_transaction(transaction_hash, @api_true)},
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.from_address_hash), params),
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.to_address_hash), params) do
       full_options =
-        Keyword.merge(
-          [
-            necessity_by_association: %{
-              [address: :names] => :optional,
-              [address: :smart_contract] => :optional,
-              address: :optional
-            }
-          ],
-          paging_options(params)
-        )
+        [
+          necessity_by_association: %{
+            [address: :names] => :optional,
+            [address: :smart_contract] => :optional,
+            address: :optional
+          }
+        ]
+        |> Keyword.merge(paging_options(params))
+        |> Keyword.merge(@api_true)
 
-      from_api = true
-      logs_plus_one = Chain.transaction_to_logs(transaction_hash, from_api, full_options)
+      logs_plus_one = Chain.transaction_to_logs(transaction_hash, full_options)
 
       {logs, next_page} = split_list_by_page(logs_plus_one)
 
@@ -229,15 +240,42 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
            {:not_found,
             Chain.hash_to_transaction(transaction_hash,
               necessity_by_association:
-                Map.merge(@transaction_necessity_by_association, %{[block: [miner: :names]] => :optional})
+                Map.merge(@transaction_necessity_by_association, %{[block: [miner: :names]] => :optional}),
+              api?: true
             )},
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.from_address_hash), params),
-         {:ok, false} <- AccessHelpers.restricted_access?(to_string(transaction.to_address_hash), params) do
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.from_address_hash), params),
+         {:ok, false} <- AccessHelper.restricted_access?(to_string(transaction.to_address_hash), params) do
       state_changes = TransactionStateHelper.state_changes(transaction)
 
       conn
       |> put_status(200)
       |> render(:state_changes, %{state_changes: state_changes})
+    end
+  end
+
+  def watchlist_transactions(conn, params) do
+    with {:auth, %{watchlist_id: watchlist_id}} <- {:auth, current_user(conn)} do
+      full_options =
+        [
+          necessity_by_association: @transaction_necessity_by_association
+        ]
+        |> Keyword.merge(paging_options(params, [:validated]))
+        |> Keyword.merge(@api_true)
+
+      {watchlist_names, transactions_plus_one} = Chain.fetch_watchlist_transactions(watchlist_id, full_options)
+
+      {transactions, next_page} = split_list_by_page(transactions_plus_one)
+
+      next_page_params =
+        next_page |> next_page_params(transactions, params) |> delete_parameters_from_next_page_params()
+
+      conn
+      |> put_status(200)
+      |> render(:transactions_watchlist, %{
+        transactions: transactions,
+        next_page_params: next_page_params,
+        watchlist_names: watchlist_names
+      })
     end
   end
 end

@@ -12,7 +12,6 @@ services:
       service: db
 
   blockscout:
-    platform: linux/x86_64
     depends_on:
       - db
       - smart-contract-verifier
@@ -31,7 +30,6 @@ services:
       -  ./envs/common-blockscout.env
     environment:
         ETHEREUM_JSONRPC_VARIANT: 'geth'
-        BLOCK_TRANSFORMER: 'clique'
         ETHEREUM_JSONRPC_HTTP_URL: http://host.docker.internal:8545/
         DATABASE_URL: postgresql://postgres:@host.docker.internal:7432/blockscout?ssl=false
         ECTO_USE_SSL: 'false'
