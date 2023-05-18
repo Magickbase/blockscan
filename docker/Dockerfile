@@ -18,6 +18,12 @@ RUN set -ex && \
     rm -v /tmp/*.apk && \
     /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib
 
+# Get Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+ENV PATH="$HOME/.cargo/bin:${PATH}"
+ENV RUSTFLAGS="-C target-feature=-crt-static"
+
 ARG CACHE_EXCHANGE_RATES_PERIOD
 ARG DISABLE_READ_API
 ARG DISABLE_WEBAPP
