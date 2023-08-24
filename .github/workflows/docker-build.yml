@@ -34,4 +34,4 @@ jobs:
           context: ./
           file: ./docker/Dockerfile
           push: true
-          tags: ghcr.io/simon-tl/${{env.IMAGE_NAME}}:latest
+          tags: ghcr.io/magickbase/${{env.IMAGE_NAME}}:latest
