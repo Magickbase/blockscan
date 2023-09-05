@@ -1,6 +1,7 @@
 defmodule ConfigHelper do
   import Bitwise
   alias Explorer.ExchangeRates.Source
+  alias Explorer.Market.History.Source.{MarketCap, Price}
   alias Indexer.Transform.Blocks
 
   @spec hackney_options() :: any()
@@ -91,18 +92,38 @@ defmodule ConfigHelper do
 
   @spec exchange_rates_source() :: Source.CoinGecko | Source.CoinMarketCap
   def exchange_rates_source do
-    cond do
-      System.get_env("EXCHANGE_RATES_SOURCE") == "coin_gecko" -> Source.CoinGecko
-      System.get_env("EXCHANGE_RATES_SOURCE") == "coin_market_cap" -> Source.CoinMarketCap
-      true -> Source.CoinGecko
+    case System.get_env("EXCHANGE_RATES_MARKET_CAP_SOURCE") do
+      "coin_gecko" -> Source.CoinGecko
+      "coin_market_cap" -> Source.CoinMarketCap
+      _ -> Source.CoinGecko
+    end
+  end
+
+  @spec exchange_rates_market_cap_source() :: MarketCap.CoinGecko | MarketCap.CoinMarketCap
+  def exchange_rates_market_cap_source do
+    case System.get_env("EXCHANGE_RATES_MARKET_CAP_SOURCE") do
+      "coin_gecko" -> MarketCap.CoinGecko
+      "coin_market_cap" -> MarketCap.CoinMarketCap
+      _ -> MarketCap.CoinGecko
+    end
+  end
+
+  @spec exchange_rates_price_source() ::
+          Price.CoinGecko | Price.CoinMarketCap | Price.CryptoCompare
+  def exchange_rates_price_source do
+    case System.get_env("EXCHANGE_RATES_PRICE_SOURCE") do
+      "coin_gecko" -> Price.CoinGecko
+      "coin_market_cap" -> Price.CoinMarketCap
+      "crypto_compare" -> Price.CryptoCompare
+      _ -> Price.CryptoCompare
     end
   end
 
   def block_transformer do
     block_transformers = %{
       "clique" => Blocks.Clique,
-      "base" => Blocks.Base,
-      "axon" => Blocks.Axon
+      "axon" => Blocks.Axon,
+      "base" => Blocks.Base
     }
 
     # Compile time environment variable access requires recompilation.
@@ -122,5 +143,14 @@ defmodule ConfigHelper do
       transformer ->
         transformer
     end
+  end
+
+  @spec parse_json_env_var(String.t(), String.t()) :: any()
+  def parse_json_env_var(env_var, default_value) do
+    env_var
+    |> safe_get_env(default_value)
+    |> Jason.decode!()
+  rescue
+    err -> raise "Invalid JSON in environment variable #{env_var}: #{inspect(err)}"
   end
 end
